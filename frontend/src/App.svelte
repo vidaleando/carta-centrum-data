@@ -1,7 +1,10 @@
 <script>
   import { onMount } from 'svelte';
-  import Map from 'maplibre-gl';
+  //import Map from 'maplibre-gl';
+  import maplibregl from 'maplibre-gl'; 
+
   import 'maplibre-gl/dist/maplibre-gl.css';
+  //import 'maplibre-gl/dist/maplibre-gl.css';
 
   let map;
   let geojsonData = [];
@@ -89,7 +92,7 @@
 
 <main>
   <header>
-    <h1>🗺️ PWA Map Application</h1>
+    <h1>Watershed Democracy</h1>
     <p>Displaying PostGIS data with MapLibre</p>
   </header>
 
