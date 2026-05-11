@@ -62,6 +62,39 @@ A Progressive Web Application that displays geographical data from a PostGIS dat
 - Python 3.9+
 - PostgreSQL 12+ with PostGIS extension
 - Git
+- **Docker Desktop** (for macOS users - optional but recommended)
+
+## Quick Start for macOS Users
+
+### Option 1: Using Docker (Recommended for macOS)
+
+See the detailed guide in [`MACOS_DOCKER_SETUP.md`](./MACOS_DOCKER_SETUP.md) for complete instructions on running this application with Docker on macOS.
+
+**Quick steps:**
+
+1. Install [Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/)
+2. Configure file sharing in Docker Desktop (Settings → Resources → File Sharing)
+3. Run the setup script:
+   ```bash
+   chmod +x setup_docker_macos.sh
+   ./setup_docker_macos.sh
+   ```
+4. Or manually:
+   ```bash
+   docker compose up -d --build
+   ```
+
+Access the app at:
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+
+### Option 2: Native Installation
+
+Follow the standard installation steps below.
+
+---
+
+## Standard Installation (All Platforms)
 
 ## Installation
 
