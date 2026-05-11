@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="PWA Map API",
+    title="Watershed Democracy API",
     description="API for serving geographical data from PostGIS to MapLibre",
     version="1.0.0",
     lifespan=lifespan
@@ -152,7 +152,7 @@ def get_sample_geojson():
 
 @app.get("/api/geojson")
 async def get_geojson(
-    table_name: Optional[str] = "geo_data",
+    table_name: Optional[str] = "basic_bounds",
     limit: Optional[int] = 1000
 ):
     """
@@ -174,31 +174,33 @@ async def get_geojson(
             # Query to fetch GeoJSON from PostGIS
             # Assumes table has a 'geom' column with geometry data
             # and optionally other columns for properties
-            query = f"""
+            query = """
                 SELECT 
                     row_to_json(feature) as geojson
                 FROM (
                     SELECT 
                         'Feature' as type,
-                        ST_AsGeoJSON(t.geom)::json as geometry,
+                        ST_AsGeoJSON(t.wkb_geometry)::json as geometry, 
                         json_build_object(
-                            'id', t.id,
-                            'name', t.name,
-                            'description', t.description,
-                            'category', t.category
+                            'id', t.ogc_fid,       
+                            'name', t.name_0,      
+                            'iso', t.iso,
+                            'admin_level', t.type_2
                         ) as properties
-                    FROM {table_name} as t
-                    WHERE t.geom IS NOT NULL
-                    LIMIT $1
+                    FROM public.basic_bounds as t
+                    WHERE t.wkb_geometry IS NOT NULL
                 ) as feature
             """
             
             rows = await conn.fetch(query, limit)
             
             if not rows:
+                print("⚠️  No rows found in database. Returning sample data.")
                 return get_sample_geojson()
             
             features = [row['geojson'] for row in rows]
+            
+            print(f"✅ Successfully fetched {len(features)} features from DB.")
             
             return {
                 "type": "FeatureCollection",
