@@ -445,17 +445,17 @@ async function toggleDataCenters() {
           }
         });
 
-// Helper for party colors (ensure this exists in your script scope)
-function getPartyColor(party) {
-  if (!party) return '#ccc';
-  const p = party.toLowerCase();
-  if (p.includes('labour')) return '#DC241f';
-  if (p.includes('conservative')) return '#0087DC';
-  if (p.includes('liberal')) return '#FDBB30';
-  if (p.includes('green')) return '#6AB023';
-  if (p.includes('snp')) return '#FFF200';
-  return '#999999';
-}
+        // Helper for party colors (ensure this exists in your script scope)
+        function getPartyColor(party) {
+          if (!party) return '#ccc';
+          const p = party.toLowerCase();
+          if (p.includes('labour')) return '#DC241f';
+          if (p.includes('conservative')) return '#0087DC';
+          if (p.includes('liberal')) return '#FDBB30';
+          if (p.includes('green')) return '#6AB023';
+          if (p.includes('snp')) return '#FFF200';
+          return '#999999';
+        }
 
         map.on('mouseenter', 'data-centers-layer', () => {
           map.getCanvas().style.cursor = 'pointer';
