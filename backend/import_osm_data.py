@@ -9,30 +9,43 @@ from urllib.parse import urlparse
 # Load environment variables
 load_dotenv()
 
-# --- Database Configuration (Same as main.py) ---
+# --- FIXED: Robust Database Configuration for Neon ---
 database_url = os.getenv("DATABASE_URL")
+
 if database_url:
+    # Neon URLs often look like: postgresql://user:pass@host/dbname?sslmode=require
+    # We need to preserve the SSL mode if present
     parsed = urlparse(database_url)
+    
+    # Extract query params to ensure sslmode is passed if needed
+    query_params = parsed.query
+    
     DB_CONFIG = {
-        "host": parsed.hostname or "localhost",
+        "host": parsed.hostname,
         "port": parsed.port or 5432,
-        "user": parsed.username or "postgres",
-        "password": parsed.password or "postgres",
+        "user": parsed.username,
+        "password": parsed.password,
         "database": parsed.path.lstrip("/") or "pwa_map_db",
+        "ssl": "require" # Force SSL for Neon
     }
+    
+    # If there are specific query params in the URL (like sslmode=require), 
+    # asyncpg usually handles the 'ssl' key, but let's be explicit for Neon
+    print(f"🔗 Connecting to Neon DB at {parsed.hostname}...")
 else:
+    print("⚠️ No DATABASE_URL found. Falling back to localhost.")
     DB_CONFIG = {
         "host": "localhost",
         "port": 5432,
         "user": "postgres",
         "password": "postgres",
         "database": "pwa_map_db",
+        "ssl": False
     }
 
-# --- Overpass Logic (Exact copy from your working main.py) ---
+# --- Overpass Logic (Fixed URL and Headers) ---
 async def fetch_osm_data_centers():
     layer_type = "data_center"
-    # UK Bounds: min_lat, min_lon, max_lat, max_lon
     bounds = "49.0,-10.0,61.0,2.0"
     
     tag_map = {
@@ -65,18 +78,24 @@ async def fetch_osm_data_centers():
         out geom;
     """
 
-    print(f"📡 Sending request to Overpass API (Query length: {len(overpass_query)} chars)...")
+    print(f"📡 Sending request to Overpass API...")
     
     try:
         async with httpx.AsyncClient() as client:
-            # EXACT same request structure as your working main.py
+            # FIX 1: Removed trailing space in URL
+            url = "https://overpass-api.de/api/interpreter"
+            
+            # FIX 2: Added Content-Type header required by some environments
+            headers = {
+                "Accept-Encoding": "gzip, deflate",
+                "User-Agent": "carta-centrum-data-import/1.0",
+                "Content-Type": "application/x-www-form-urlencoded"
+            }
+            
             response = await client.post(
-                "https://overpass-api.de/api/interpreter",
-                data={"data": overpass_query}, # Send as dict/form-data
-                headers={
-                    "Accept-Encoding": "gzip, deflate",
-                    "User-Agent": "curl/7.88.0",
-                },
+                url,
+                data={"data": overpass_query},
+                headers=headers,
                 timeout=65.0
             )
             
@@ -117,8 +136,6 @@ async def fetch_osm_data_centers():
                 coords = [[n["lon"], n["lat"]] for n in element.get("geometry", [])]
                 if len(coords) < 2: continue
                 
-                # Calculate centroid for ways to store as Point in DB for simplicity
-                # Or store as Polygon if you prefer. Let's store as Point (centroid) for easy mapping.
                 lon = sum(c[0] for c in coords) / len(coords)
                 lat = sum(c[1] for c in coords) / len(coords)
                 feature["geometry"] = {
@@ -126,13 +143,15 @@ async def fetch_osm_data_centers():
                     "coordinates": [lon, lat]
                 }
             elif element["type"] == "relation":
-                # Skip complex relations for this import
                 continue
 
             features.append(feature)
             
         return features
 
+    except httpx.HTTPStatusError as e:
+        print(f"❌ HTTP Error {e.response.status_code}: {e.response.text[:200]}")
+        return None
     except Exception as e:
         print(f"❌ Network/Error: {str(e)}")
         return None
@@ -144,8 +163,9 @@ async def save_to_db(features):
         return
 
     try:
+        # Use the robust DB_CONFIG defined at the top
         conn = await asyncpg.connect(**DB_CONFIG)
-        print("🔗 Connected to database.")
+        print("🔗 Connected to database successfully.")
 
         # Create table if not exists
         await conn.execute("""
@@ -190,9 +210,12 @@ async def save_to_db(features):
 
     except Exception as e:
         print(f"❌ Database Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 async def main():
     print("🚀 Starting Data Center Import Script...")
+    print(f"🌍 Target DB: {DB_CONFIG['host']}")
     
     # 1. Fetch
     features = await fetch_osm_data_centers()
