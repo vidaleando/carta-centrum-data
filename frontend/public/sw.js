@@ -1,3 +1,30 @@
+self.addEventListener('fetch', event => {
+  // Let cross-origin requests (e.g. API on a different port) pass through untouched
+  if (!event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request).then(response => {
+          if (!response || response.status !== 200 || response.type !== 'basic') {
+            return response;
+          }
+          
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME)
+            .then(cache => cache.put(event.request, responseToCache));
+          
+          return response;
+        });
+      })
+  );
+});
+
 const CACHE_NAME = 'pwa-map-cache-v1';
 const urlsToCache = [
   '/',
@@ -8,6 +35,7 @@ const urlsToCache = [
 
 // Install event - cache assets
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(urlsToCache))
@@ -17,15 +45,13 @@ self.addEventListener('install', event => {
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    clients.claim().then(() =>  // take control of all open tabs immediately
+      caches.keys().then(cacheNames =>
+        Promise.all(
+          cacheNames.map(name => name !== CACHE_NAME ? caches.delete(name) : null)
+        )
+      )
+    )
   );
 });
 
