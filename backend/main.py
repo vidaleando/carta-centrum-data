@@ -12,6 +12,10 @@ from urllib.parse import urlparse
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+
 import asyncpg
 from dotenv import load_dotenv
 
@@ -147,6 +151,27 @@ async def health_check():
     else:
         return {"status": "demo_mode", "database": "not_connected"}
 
+# Mount the frontend build directory as static files
+# Ensure this path matches where your Dockerfile built the frontend
+frontend_build_path = os.path.join(os.path.dirname(__file__), "..", "frontend", "build")
+
+if os.path.exists(frontend_build_path):
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_build_path, "assets")), name="assets")
+else:
+    print("⚠️ Frontend build directory not found. Running in API-only mode.")
+
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    """Catch-all route to serve index.html for SPA routing."""
+    index_path = os.path.join(frontend_build_path, "index.html")
+    
+    # If it's an API request, let FastAPI handle it normally (won't reach here due to specific @app.get routes)
+    # If the file exists in build, serve it (optional, usually handled by mount)
+    # Otherwise, return index.html for client-side routing
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    
+    return {"message": "Frontend not built"}
 
 def get_sample_geojson():
     """Return sample GeoJSON data for demo purposes."""
