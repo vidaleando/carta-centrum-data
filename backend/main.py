@@ -64,7 +64,7 @@ async def lifespan(app: FastAPI):
             print(f"✅ Found {count} rows in basic_bounds table")
             
     except Exception as e:
-        print("❌ Warning: Could not connect to database: {e}")
+        print(f"❌ Warning: Could not connect to database: {e}")
         print("Running in demo mode with sample data")
         db_pool = None
     yield
