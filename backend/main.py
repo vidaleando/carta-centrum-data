@@ -110,33 +110,67 @@ app = FastAPI(
 )
 
 # Enable CORS for frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 # app.add_middleware(
 #     CORSMiddleware,
-#     allow_origins=["*"],  # In production, specify your frontend URL
+#     allow_origins=["http://localhost:3000", "http://localhost:5173"],
 #     allow_credentials=True,
 #     allow_methods=["*"],
 #     allow_headers=["*"],
 # )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, change to specific URL: ["https://your-app.onrender.com"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+
+# --- FIX: Correct Path Calculation for Docker ---
+# __file__ is /app/backend/main.py
+# We need to go up one level to /app, then into frontend/build
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+frontend_build_path = os.path.join(PROJECT_ROOT, "frontend", "build")
+
+# Debug log to verify path in production logs
+print(f"🔍 Looking for frontend at: {frontend_build_path}")
+if not os.path.exists(frontend_build_path):
+    print(f"❌ ERROR: Frontend build directory NOT found at {frontend_build_path}")
+    print("   Check Dockerfile build step and output directory name (build vs dist)")
+else:
+    print("✅ Frontend build directory found!")
+    # Mount static assets (CSS/JS)
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_build_path, "assets")), name="assets")
 
 @app.get("/")
-async def root():
-    """Health check endpoint."""
+async def serve_root():
+    """Serve the frontend index.html for the root path."""
+    index_path = os.path.join(frontend_build_path, "index.html")
+    
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    
+    # Fallback if build failed
     return {
-        "message": "PWA Map API is running",
-        "endpoints": {
-            "geojson": "/api/geojson",
-            "health": "/health"
-        }
+        "message": "API is running successfully!", 
+        "status": "Frontend not found. Check build logs.",
+        "expected_path": index_path
     }
 
+# Catch-all for SPA routing (e.g., /about, /map)
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    # Prevent catching API routes (though specific @app.gets usually take precedence)
+    if full_path.startswith("api/") or full_path.startswith("assets/") or full_path.startswith("docs"):
+        raise HTTPException(status_code=404, detail="Not found")
+
+    index_path = os.path.join(frontend_build_path, "index.html")
+    
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    
+    return {"message": "Frontend not built"}
 
 @app.get("/health")
 async def health_check():
