@@ -233,7 +233,8 @@ async function toggleDataCenters() {
 
           try {
             // 2. Fetch MP Data (which includes constituency name)
-            const mpResponse = await fetch(`http://localhost:8001/api/constituency-mp?lat=${lat}&lon=${lon}`);
+            // const mpResponse = await fetch(`http://localhost:8001/api/constituency-mp?lat=${lat}&lon=${lon}`);
+            const mpResponse = await fetch(`]/api/constituency-mp?lat=${lat}&lon=${lon}`);
             const mpData = await mpResponse.json();
 
             if (!mpData.found) {
@@ -278,7 +279,9 @@ async function toggleDataCenters() {
 
               // Fetch Geometry for the specific constituency
               // We encode URI component to handle spaces/special chars in names safely
-              const geomUrl = `http://localhost:8001/api/constituency/${encodeURIComponent(mpData.constituency)}`;
+              // const geomUrl = `http://localhost:8001/api/constituency/${encodeURIComponent(mpData.constituency)}`;
+              const geomUrl = `/api/constituency/${encodeURIComponent(mpData.constituency)}`;
+
               const geomRes = await fetch(geomUrl);
               
               if (geomRes.ok) {
@@ -521,7 +524,9 @@ async function toggleDataCenters() {
       if (!parliamentaryLoaded) {
         parliamentaryLoading = true;
         try {
-          const response = await fetch('http://localhost:8001/api/parliamentary-boundaries');
+          // const response = await fetch('http://localhost:8001/api/parliamentary-boundaries');
+          const response = await fetch('/api/parliamentary-boundaries');
+
           const data = await response.json();
 
           if (data && Array.isArray(data.features)) {
