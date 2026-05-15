@@ -46,8 +46,11 @@
 
       //const response = await fetch('http://localhost:8001/api/geojson?source=sample');
       const response = await fetch('/api/geojson?source=sample');
-      if (!response.ok) throw new Error('Failed to fetch base data');
-
+     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API Error ${response.status}:`, errorText);
+      throw new Error(`Failed to fetch base data: ${response.status} ${response.statusText}`);
+    }
       const data = await response.json();
       geojsonData = data.features || [];
 
@@ -65,7 +68,7 @@
     } catch (err) {
       error = err.message;
       loading = false;
-      console.error(err);
+      console.error("Map Load Error:", err);
     }
   });
 
