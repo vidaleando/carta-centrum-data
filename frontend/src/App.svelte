@@ -44,7 +44,8 @@
         attributionControl: true
       });
 
-      const response = await fetch('http://localhost:8001/api/geojson?source=sample');
+      //const response = await fetch('http://localhost:8001/api/geojson?source=sample');
+      const response = await fetch('/api/geojson?source=sample');
       if (!response.ok) throw new Error('Failed to fetch base data');
 
       const data = await response.json();
@@ -75,7 +76,8 @@
 async function getMpInfo(lat, lon) {
   try {
     // Call the new local endpoint
-    const response = await fetch(`http://localhost:8001/api/constituency-mp?lat=${lat}&lon=${lon}`);
+    //const response = await fetch(`http://localhost:8001/api/constituency-mp?lat=${lat}&lon=${lon}`);
+    const response = await fetch(`/api/constituency-mp?lat=${lat}&lon=${lon}`);
     const data = await response.json();
 
     if (data.found) {
@@ -163,7 +165,8 @@ async function toggleDataCenters() {
       dataCentersError = null;
       
       try {
-        const res = await fetch('http://localhost:8001/api/geojson?table_name=osm_data_centers');
+        // const res = await fetch('http://localhost:8001/api/geojson?table_name=osm_data_centers');
+        const res = await fetch('/api/geojson?table_name=osm_data_centers');
         if (!res.ok) throw new Error("API Error");
         
         dataCenters = await res.json();
@@ -198,108 +201,7 @@ async function toggleDataCenters() {
           }
         });
 
-        // Click Handler using Svelte Component (Direct Rendering)
-        // map.on('click', 'data-centers-layer', async (e) => {
-        //   const props = e.features[0].properties;
-        //   const lat = e.lngLat.lat;
-        //   const lon = e.lngLat.lng;
-
-        //   // 1. Create Popup with a temporary container
-        //   const popup = new maplibregl.Popup({ offset: 25, closeButton: true })
-        //     .setLngLat(e.lngLat)
-        //     .setHTML('<div style="padding:1rem; min-width:250px;">🔄 Fetching local MP...</div>')
-        //     .addTo(map);
-
-        //   // 2. Wait for popup to be in DOM, then replace content with Svelte Component
-        //   setTimeout(async () => {
-        //     const popupContentElement = popup.getElement().querySelector('.maplibregl-popup-content');
-            
-        //     if (popupContentElement) {
-        //       // Clear loading text
-        //       popupContentElement.innerHTML = '';
-              
-        //       // Mount Loading State Component
-        //       // FIX: Pass properties directly inside the 'props' object, not nested
-        //       const loadingComponent = new DataCenterInfo({
-        //         target: popupContentElement,
-        //         props: {
-        //           name: props.name || 'Unknown',
-        //           operator: props.operator || 'N/A',
-        //           isLoadingMp: true
-        //           // Do NOT wrap these in another { props: ... }
-        //         }
-        //       });
-
-        //       // 3. Fetch MP Data
-        //       const mpInfo = await getMpInfo(lat, lon);
-              
-        //       // 4. Update Component Props (Reactive Update)
-        //       loadingComponent.$set({
-        //         isLoadingMp: false,
-        //         mpInfo: mpInfo
-        //       });
-
-
-        //       // 5. HIGHLIGHT CONSTITUENCY
-        //       if (mpInfo && mpInfo.constituency) {
-        //           const constName = mpInfo.constituency;
-                  
-        //           // Only fetch if it's a different constituency than currently highlighted
-        //           if (highlightedConstituencyName !== constName) {
-        //               try {
-        //                   const constRes = await fetch(`http://localhost:8001/api/constituency/${encodeURIComponent(constName)}`);
-        //                   const constData = await constRes.json();
-                          
-        //                   if (constData.features.length > 0) {
-        //                       // Remove old highlight if exists
-        //                       if (map.getSource('highlight-source')) {
-        //                           map.removeLayer('highlight-layer');
-        //                           map.removeSource('highlight-source');
-        //                       }
-
-        //                       // Add new highlight
-        //                       map.addSource('highlight-source', {
-        //                           type: 'geojson',
-        //                           data: constData
-        //                       });
-
-        //                       map.addLayer({
-        //                           id: 'highlight-layer',
-        //                           type: 'fill',
-        //                           source: 'highlight-source',
-        //                           paint: {
-        //                               'fill-color': '#ff9800', // Orange highlight
-        //                               'fill-opacity': 0.3,
-        //                               'fill-outline-color': '#e65100'
-        //                           }
-        //                       }, 'data-centers-layer'); // Insert below data centers
-
-        //                       // Fit bounds to the constituency
-        //                       const bounds = new maplibregl.LngLatBounds();
-        //                       constData.features[0].geometry.coordinates.forEach(coord => {
-        //                           // Handle MultiPolygon coordinates structure
-        //                           if (Array.isArray(coord)) {
-        //                               coord[0].forEach(point => bounds.extend(point));
-        //                           }
-        //                       });
-                              
-        //                       map.fitBounds(bounds, { padding: 50, duration: 1000 });
-                              
-        //                       highlightedConstituencyName = constName;
-        //                   }
-        //               } catch (err) {
-        //                   console.warn("Could not highlight constituency:", err);
-        //               }
-        //           }
-        //       }
-              
-        //       // Cleanup when popup closes
-        //       popup.on('close', () => {
-        //         loadingComponent.$destroy();
-        //       });
-        //     }
-        //   }, 0);
-        // });
+     
 
         // Store reference to the current highlight to clean it up properly
         let currentHighlightSourceId = 'constituency-highlight-source';
@@ -487,7 +389,8 @@ async function toggleDataCenters() {
     if (showCounties) {
         if (!countiesLoaded) {
             try {
-                const response = await fetch('http://localhost:8001/api/counties');
+                // const response = await fetch('http://localhost:8001/api/counties');
+                const response = await fetch('/api/counties');
                 const data = await response.json();
                 
                 if (data && Array.isArray(data.features)) {
