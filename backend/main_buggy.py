@@ -119,21 +119,30 @@ app = FastAPI(
 # )
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, change to specific URL: ["https://pp.onrender.com"]
+    allow_origins=["*"],  # In production, change to specific URL: ["https://your-app.onrender.com"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# Mount the frontend build directory as static files
-# Ensure this path matches where the Dockerfile built the frontend
-frontend_build_path = os.path.join(os.path.dirname(__file__), "..", "frontend", "build")
+# --- FIX: Correct Path Calculation for Docker ---
+# __file__ is /app/backend/main.py
+# We need to go up one level to /app, then into frontend/build
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BASE_DIR)
+frontend_build_path = os.path.join(PROJECT_ROOT, "frontend", "build")
 
-if os.path.exists(frontend_build_path):
-    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_build_path, "assets")), name="assets")
+# Debug log to verify path in production logs
+print(f"🔍 Looking for frontend at: {frontend_build_path}")
+if not os.path.exists(frontend_build_path):
+    print(f"❌ ERROR: Frontend build directory NOT found at {frontend_build_path}")
+    print("   Check Dockerfile build step and output directory name (build vs dist)")
 else:
-    print("⚠️ Frontend build directory not found. Running in API-only mode.")
+    print("✅ Frontend build directory found!")
+    # Mount static assets (CSS/JS)
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_build_path, "assets")), name="assets")
+
 @app.get("/")
 async def serve_root():
     """Serve the frontend index.html for the root path."""
@@ -149,7 +158,19 @@ async def serve_root():
         "expected_path": index_path
     }
 
+# Catch-all for SPA routing (e.g., /about, /map)
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    # Prevent catching API routes (though specific @app.gets usually take precedence)
+    if full_path.startswith("api/") or full_path.startswith("assets/") or full_path.startswith("docs"):
+        raise HTTPException(status_code=404, detail="Not found")
 
+    index_path = os.path.join(frontend_build_path, "index.html")
+    
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    
+    return {"message": "Frontend not built"}
 
 @app.get("/health")
 async def health_check():
@@ -164,8 +185,27 @@ async def health_check():
     else:
         return {"status": "demo_mode", "database": "not_connected"}
 
+# Mount the frontend build directory as static files
+# Ensure this path matches where your Dockerfile built the frontend
+frontend_build_path = os.path.join(os.path.dirname(__file__), "..", "frontend", "build")
 
+if os.path.exists(frontend_build_path):
+    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_build_path, "assets")), name="assets")
+else:
+    print("⚠️ Frontend build directory not found. Running in API-only mode.")
 
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    """Catch-all route to serve index.html for SPA routing."""
+    index_path = os.path.join(frontend_build_path, "index.html")
+    
+    # If it's an API request, let FastAPI handle it normally (won't reach here due to specific @app.get routes)
+    # If the file exists in build, serve it (optional, usually handled by mount)
+    # Otherwise, return index.html for client-side routing
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    
+    return {"message": "Frontend not built"}
 
 def get_sample_geojson():
     """Return sample GeoJSON data for demo purposes."""
@@ -811,20 +851,6 @@ async def get_constituency_by_name(name: str):
     except Exception as e:
         print(f"Error fetching constituency: {e}")
         return {"type": "FeatureCollection", "features": []}
-    
-# Catch-all for SPA routing (e.g., /about, /map)
-@app.get("/{full_path:path}")
-async def serve_frontend(full_path: str):
-    # Prevent catching API routes (though specific @app.gets usually take precedence)
-    if full_path.startswith("api/") or full_path.startswith("assets/") or full_path.startswith("docs"):
-        raise HTTPException(status_code=404, detail="Not found")
-
-    index_path = os.path.join(frontend_build_path, "index.html")
-    
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    
-    return {"message": "Frontend not built"}
 
 if __name__ == "__main__":
     import uvicorn
