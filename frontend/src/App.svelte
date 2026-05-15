@@ -234,7 +234,7 @@ async function toggleDataCenters() {
           try {
             // 2. Fetch MP Data (which includes constituency name)
             // const mpResponse = await fetch(`http://localhost:8001/api/constituency-mp?lat=${lat}&lon=${lon}`);
-            const mpResponse = await fetch(`]/api/constituency-mp?lat=${lat}&lon=${lon}`);
+            const mpResponse = await fetch(`/api/constituency-mp?lat=${lat}&lon=${lon}`);
             const mpData = await mpResponse.json();
 
             if (!mpData.found) {
