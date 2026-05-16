@@ -31,7 +31,7 @@
       {#if mpInfo.party}
         <p>
           <strong>Party:</strong> 
-          <span style="background-color: {mpInfo.colour || '#ccc'}; color: #333; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem;">
+          <span style="background-color: {mpInfo.color || '#ccc'}; color: #333; padding: 2px 6px; border-radius: 4px; font-size: 0.85rem;">
             {mpInfo.party}
           </span>
         </p>
