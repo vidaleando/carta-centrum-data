@@ -24,19 +24,18 @@ COPY frontend/ ./frontend/
 WORKDIR /app/frontend
 RUN npm ci && npm run build
 
-# The build output will be in frontend/build (or frontend/dist depending on your config)
-# We assume standard 'npm run build' output is in 'build' folder for this example. 
-# If your svelte-kit/vite config outputs to 'dist', change the path below accordingly.
+# Vite writes the build to /app/frontend/build, which the backend serves
+# (Settings.frontend_build_dir).
 
 # 5. Final Setup
-WORKDIR /app
-# Move built static files to a known location or serve directly from frontend/build
-# Our main.py will be configured to serve './frontend/build'
+# Run from backend/ so `app.*`, `importers.*` and `migrations` are importable,
+# e.g. `docker run … python -m migrations`.
+WORKDIR /app/backend
 
 EXPOSE 8000
 
-# Start the backend (which now also serves static files)
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start the backend (which also serves the frontend)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # FROM python:3.11-slim
 
