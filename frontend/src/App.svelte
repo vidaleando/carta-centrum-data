@@ -169,7 +169,7 @@ async function toggleDataCenters() {
       
       try {
         // const res = await fetch('http://localhost:8001/api/geojson?table_name=osm_data_centers');
-        const res = await fetch('/api/geojson?table_name=osm_data_centers');
+        const res = await fetch('/api/datacentres');
         if (!res.ok) throw new Error("API Error");
         
         dataCenters = await res.json();
