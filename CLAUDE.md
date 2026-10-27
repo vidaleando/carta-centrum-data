@@ -4,7 +4,7 @@ This file guides Claude Code (claude.ai/code) when working in this repository.
 
 ## What this is
 
-**Carta Centrum Data** (UI title: "Watershed Democracy") is a map-based PWA that places UK data-centre infrastructure next to democratic representation. Click a data centre and the app finds the parliamentary constituency it sits in, the sitting MP, and highlights the constituency boundary.
+**Carta Centrum Data** (UI title: "Carta Magna") is a map-based PWA that places UK data-centre infrastructure next to democratic representation. Click a data centre and the app finds the parliamentary constituency it sits in, the sitting MP, and highlights the constituency boundary.
 
 - **Frontend**: Svelte 4 + Vite 5 + MapLibre GL 4 (`frontend/`)
 - **Backend**: FastAPI + asyncpg (`backend/app/`)

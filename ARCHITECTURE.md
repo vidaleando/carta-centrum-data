@@ -14,7 +14,7 @@ Data centres are physical, energy- and water-intensive facilities, but it's hard
 2. **Overlays political geography**: the 2024 UK parliamentary constituencies and sub-national administrative boundaries.
 3. **Links infrastructure to representation**: click any data centre and the app finds the constituency it sits in, shows the sitting MP and their party, and highlights that constituency's boundary on the map.
 
-The in-app working title is **"Watershed Democracy"**.
+The in-app working title is **"Carta Magna"**.
 
 ## 2. Main features
 
