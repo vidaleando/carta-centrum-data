@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     frontend_build_dir: Path = REPO_DIR / "frontend" / "build"
     db_pool_min_size: int = 1
     db_pool_max_size: int = 10
+    # Set to 0 behind a transaction-mode pooler (e.g. Supabase on port 6543),
+    # which can't keep asyncpg's named prepared statements between transactions.
+    db_statement_cache_size: int = 100
     theyworkforyou_key: Optional[str] = None
 
     @property

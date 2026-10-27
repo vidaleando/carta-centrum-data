@@ -4,7 +4,7 @@
 COUNTY_FEATURES = """
     SELECT
         'Feature' AS type,
-        ST_AsGeoJSON(ST_SimplifyPreserveTopology(t.wkb_geometry, 0.0005))::json AS geometry,
+        ST_AsGeoJSON(ST_SimplifyPreserveTopology(t.wkb_geometry, 0.0005), 6)::json AS geometry,
         json_build_object(
             'id', t.ogc_fid,
             'name', t.name_2,

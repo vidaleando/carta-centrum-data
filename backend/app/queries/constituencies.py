@@ -18,7 +18,7 @@ CONSTITUENCY_MP_AT_POINT = """
 CONSTITUENCY_BY_NAME_FEATURES = """
     SELECT
         'Feature' AS type,
-        ST_AsGeoJSON(ST_SimplifyPreserveTopology(c.geometry, 0.001))::json AS geometry,
+        ST_AsGeoJSON(ST_SimplifyPreserveTopology(c.geometry, 0.001), 6)::json AS geometry,
         json_build_object(
             'name', c.name,
             'ons_code', c.ons_code
@@ -32,7 +32,7 @@ CONSTITUENCY_BY_NAME_FEATURES = """
 ALL_CONSTITUENCY_FEATURES = """
     SELECT
         'Feature' AS type,
-        ST_AsGeoJSON(ST_SimplifyPreserveTopology(c.geometry, 0.0005))::json AS geometry,
+        ST_AsGeoJSON(ST_SimplifyPreserveTopology(c.geometry, 0.0005), 6)::json AS geometry,
         json_build_object(
             'name', c.name,
             'code', c.ons_code

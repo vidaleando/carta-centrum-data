@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query
 
 from app.db import Conn
-from app.geojson import GeoJSONResponse, fetch_feature_collection
+from app.geojson import CACHE_LAYER, GeoJSONResponse, fetch_feature_collection
 from app.queries import constituencies as q
 from app.schemas import ConstituencyMP, ConstituencyMPFound, ConstituencyMPNotFound
 
@@ -35,10 +35,10 @@ async def get_constituency_mp(
 @router.get("/constituency/{name}", response_class=GeoJSONResponse)
 async def get_constituency_by_name(conn: Conn, name: str):
     """A single constituency boundary by name (case-insensitive), simplified to ~100 m."""
-    return await fetch_feature_collection(conn, q.CONSTITUENCY_BY_NAME_FEATURES, name)
+    return await fetch_feature_collection(conn, q.CONSTITUENCY_BY_NAME_FEATURES, name, headers=CACHE_LAYER)
 
 
 @router.get("/parliamentary-boundaries", response_class=GeoJSONResponse)
 async def get_parliamentary_boundaries(conn: Conn):
     """All constituency boundaries, simplified to ~50 m."""
-    return await fetch_feature_collection(conn, q.ALL_CONSTITUENCY_FEATURES)
+    return await fetch_feature_collection(conn, q.ALL_CONSTITUENCY_FEATURES, headers=CACHE_LAYER)

@@ -37,6 +37,7 @@ class Database:
                     dsn=self._settings.asyncpg_dsn,
                     min_size=self._settings.db_pool_min_size,
                     max_size=self._settings.db_pool_max_size,
+                    statement_cache_size=self._settings.db_statement_cache_size,
                     timeout=10,
                 )
         return self._pool

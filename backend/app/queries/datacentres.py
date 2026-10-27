@@ -4,7 +4,7 @@
 DATACENTRE_FEATURES = """
     SELECT
         'Feature' AS type,
-        ST_AsGeoJSON(t.geom)::json AS geometry,
+        ST_AsGeoJSON(t.geom, 6)::json AS geometry,
         json_build_object(
             'id', t.osm_id,
             'name', t.name,
