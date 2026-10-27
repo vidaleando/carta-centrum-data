@@ -90,7 +90,27 @@ def test_admin_area_lookup(db_client):
     assert db_client.get("/api/constituency", params={"lat": 40, "lon": -70}).json() == {"found": False}
 
 
+def test_large_responses_are_gzipped(db_client):
+    # The fixture GeoJSON is below the 1 KB threshold; the OpenAPI schema isn't.
+    r = db_client.get("/openapi.json", headers={"Accept-Encoding": "gzip"})
+    assert r.headers["content-encoding"] == "gzip"
+    assert r.json()["info"]["title"] == "Carta Centrum Data API"
+    small = db_client.get("/health", headers={"Accept-Encoding": "gzip"})
+    assert "content-encoding" not in small.headers
+
+
+def test_coordinates_are_limited_to_six_decimals(db_client):
+    point = db_client.get("/api/datacentres").json()["features"][0]["geometry"]["coordinates"]
+    assert all(len(str(v).split(".")[-1]) <= 6 for v in point)
+
+
 def test_removed_endpoints_are_gone(db_client):
     assert db_client.post("/api/geojson", json={}).status_code == 405
     assert db_client.get("/api/osm/pub").status_code == 404
     assert db_client.get("/api/parliamentary-constituencies").status_code == 404
+
+
+def test_boundary_layers_are_cacheable(db_client):
+    for path in ["/api/parliamentary-boundaries", "/api/counties", "/api/constituency/Riverside North"]:
+        assert "s-maxage" in db_client.get(path).headers["cache-control"]
+    assert "cache-control" not in db_client.get("/api/constituency-mp", params={"lat": 51.5, "lon": -0.1}).headers

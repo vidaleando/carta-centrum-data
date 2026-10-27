@@ -8,6 +8,7 @@ from typing import Optional
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from app.config import Settings, get_settings
 from app.db import Database
@@ -41,6 +42,10 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
     )
     app.state.settings = settings
     app.state.db = Database(settings)
+
+    # The boundary layers are several MB of GeoJSON. Compressing them also keeps
+    # them under Vercel's 4.5 MB function response limit.
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
 
     if settings.cors_origin_list:
         app.add_middleware(
