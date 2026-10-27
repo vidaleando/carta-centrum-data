@@ -11,7 +11,7 @@ RUN npm install
 # Copy application code
 COPY . .
 
-EXPOSE 5173
+EXPOSE 3000
 
 # Run in development mode with hot reload
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

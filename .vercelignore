@@ -1,0 +1,11 @@
+# Never upload secrets or local environments to Vercel.
+**/.env
+**/.env.*
+!**/.env.example
+backend/venv
+backend/.venv
+**/node_modules
+**/__pycache__
+frontend/build
+backend/tests
+backend/constituencies.geojson
