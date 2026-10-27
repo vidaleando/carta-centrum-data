@@ -8,7 +8,8 @@ This file guides Claude Code (claude.ai/code) when working in this repository.
 
 - **Frontend**: Svelte 4 + Vite 5 + MapLibre GL 4 (`frontend/`)
 - **Backend**: FastAPI + asyncpg (`backend/app/`)
-- **Database**: PostgreSQL + PostGIS. Production uses Neon (`DATABASE_URL` with SSL).
+- **Database**: PostgreSQL + PostGIS. Production uses Supabase (London), reached through its transaction pooler.
+- **Hosting**: Vercel (https://carta-centrum-data.vercel.app). The Svelte build is served as static files and FastAPI runs as a Python function (`api/index.py`). The Dockerfile still works for self-hosting.
 - **External data**: OpenStreetMap (Overpass API), ONS 2024 constituency boundaries (GeoJSON), TheyWorkForYou API (MPs)
 
 The root `README.md` is a leftover generic template and is partly out of date. Trust the code and `ARCHITECTURE.md` over it.
@@ -42,6 +43,10 @@ npm run build      # outputs to frontend/build/ (served by FastAPI in prod)
 
 # Production-style single container (from repo root)
 docker build -t carta-centrum . && docker run -p 8000:8000 -e DATABASE_URL=... carta-centrum
+
+# Vercel (from repo root; project vidaleando1/carta-centrum-data, not Git-connected)
+vercel deploy          # preview (behind Vercel login; test with `vercel curl /health --deployment <url>`)
+vercel deploy --prod
 ```
 
 There are no linters or type-checkers configured.
@@ -67,6 +72,16 @@ There are no linters or type-checkers configured.
   - MPs are joined to constituencies by lower-cased name, not ONS code.
   - `osm_data_centers.osm_id` is `"<type>/<id>"` (e.g. `way/123`).
   - `basic_bounds` (counties layer) is loaded externally with ogr2ogr and isn't covered by migrations.
+
+## Deployment (Vercel + Supabase)
+
+- `vercel.json` builds `frontend/` and routes `/api/*`, `/health`, `/docs` and `/openapi.json` to the function. Everything else falls back to `index.html`.
+- The function installs from the **root** `requirements.txt`. Vercel can't follow `-r`, so keep it in sync with `backend/requirements.txt`. `.python-version` pins 3.12 for the pinned pydantic and asyncpg.
+- Env vars on Vercel: `DATABASE_URL` (Supabase transaction pooler, port 6543), `DB_STATEMENT_CACHE_SIZE=0` (required by the transaction pooler), `DB_POOL_MIN_SIZE=0`, `DB_POOL_MAX_SIZE=3`.
+- Run migrations and importers against the **session** pooler (port 5432) from your machine.
+- Function responses are limited to 4.5 MB. GZip plus 6-decimal coordinates keep `/api/parliamentary-boundaries` at about 2.3 MB.
+- Building that layer takes about 20 s on Supabase's free tier. Boundary layers send `Cache-Control: s-maxage=86400`, so Vercel's CDN serves repeat requests. Hit the endpoint once after a deploy to warm the cache.
+- Migration `002` enables RLS with no policies, so Supabase's auto-generated REST API exposes nothing. The app connects as the table owner, which bypasses RLS. Enable RLS on any new public table too.
 
 ## Gotchas
 
