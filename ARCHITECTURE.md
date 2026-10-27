@@ -36,7 +36,7 @@ The in-app working title is **"Watershed Democracy"**.
                          │           Single Docker container         │
 ┌──────────────────┐     │  ┌──────────────────────────────────────┐ │     ┌───────────────────────┐
 │  Browser (PWA)   │────▶│  │ FastAPI (uvicorn), backend/app        │ │────▶│ PostgreSQL + PostGIS  │
-│  Svelte 4        │◀────│  │  • /api/*  JSON / GeoJSON endpoints   │ │◀────│ (Neon, managed)       │
+│  Svelte 4        │◀────│  │  • /api/*  JSON / GeoJSON endpoints   │ │◀────│ (Supabase, managed)   │
 │  MapLibre GL 4   │     │  │  • static files + SPA fallback →      │ │     └───────────▲───────────┘
 └──────────────────┘     │  │    Svelte build (frontend/build)      │ │                 │
          │               │  └──────────────────────────────────────┘ │                 │ atomic reload
@@ -69,7 +69,7 @@ The in-app working title is **"Watershed Democracy"**.
 | Config | pydantic-settings | 2.1 |
 | HTTP client | httpx (importers: Overpass, TheyWorkForYou) | 0.27 |
 | Tests | pytest | 8.3 |
-| Database | PostgreSQL + PostGIS | PG 15 / PostGIS 3.3 (local), Neon (hosted) |
+| Database | PostgreSQL + PostGIS | PG 15 / PostGIS 3.3 (local), Supabase (hosted) |
 | Container | `python:3.11-slim` + Node (build-time) | n/a |
 
 ## 5. Repository layout
@@ -135,7 +135,7 @@ curl "http://localhost:8000/api/constituency-mp?lat=51.5115&lon=-0.0005"
 
 ## 8. Getting started (local development)
 
-**Prerequisites:** Python 3.11+, Node 20+, and a PostGIS database (local Docker `postgis/postgis:15-3.3` or a free Neon project).
+**Prerequisites:** Python 3.11+, Node 20+, and a PostGIS database (local Docker `postgis/postgis:15-3.3` or a free Supabase project).
 
 ```bash
 # 1. Backend
@@ -171,6 +171,8 @@ docker build -t carta-centrum .
 docker run -p 8000:8000 -e DATABASE_URL="postgresql://…" carta-centrum
 docker run --rm -e DATABASE_URL="postgresql://…" carta-centrum python -m migrations   # schema changes
 ```
+
+**Hosted deployment:** the live site, https://carta-centrum-data.vercel.app, runs on Vercel with a Supabase database in London. Vercel serves the Svelte build as static files and runs FastAPI as a Python function (`api/index.py`, configured in `vercel.json`). The heavy boundary layers are cached on Vercel's CDN. See the Deployment section of `CLAUDE.md` for environment variables and limits.
 
 ## 9. Data sources & attribution
 
