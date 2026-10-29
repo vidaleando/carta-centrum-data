@@ -1,7 +1,7 @@
 {
-  "name": "PWA Map Application",
-  "short_name": "MapApp",
-  "description": "Progressive Web App displaying geographical data from PostGIS on MapLibre",
+  "name": "Carta Magna",
+  "short_name": "Carta Magna",
+  "description": "UK data centres mapped alongside the constituencies and MPs that represent them.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -16,7 +16,7 @@ from app.config import get_settings
 
 log = logging.getLogger("importers")
 
-USER_AGENT = "carta-centrum-data-import/1.0"
+USER_AGENT = "carta-magna-import/1.0"
 
 
 class ImportFailed(Exception):

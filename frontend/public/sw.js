@@ -1,5 +1,5 @@
 // Bump the version to drop every older cache on activate.
-const CACHE_NAME = 'pwa-map-cache-v2';
+const CACHE_NAME = 'carta-magna-cache-v3';
 const PRECACHE = ['/manifest.json', '/favicon.svg'];
 
 self.addEventListener('install', event => {

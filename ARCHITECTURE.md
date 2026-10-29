@@ -1,4 +1,4 @@
-# Carta Centrum Data: Architecture & Overview
+# Carta Magna: Architecture & Overview
 
 > An open, map-based tool that shows where the UK's data centres are and who represents those areas in Parliament. Future versions will also show their growing energy demand and environmental footprint.
 
@@ -8,13 +8,11 @@
 
 ## 1. What it does
 
-Data centres are physical, energy- and water-intensive facilities, but it's hard for the public to see where they are or who is accountable for them locally. Carta Centrum Data puts both on one map:
+Data centres are physical, energy- and water-intensive facilities, but it's hard for the public to see where they are or who is accountable for them locally. Carta Magna puts both on one map:
 
 1. **Plots UK data centres and telecom infrastructure** sourced from OpenStreetMap.
 2. **Overlays political geography**: the 2024 UK parliamentary constituencies and sub-national administrative boundaries.
 3. **Links infrastructure to representation**: click any data centre and the app finds the constituency it sits in, shows the sitting MP and their party, and highlights that constituency's boundary on the map.
-
-The in-app working title is **"Carta Magna"**.
 
 ## 2. Main features
 
@@ -172,7 +170,7 @@ docker run -p 8000:8000 -e DATABASE_URL="postgresql://…" carta-centrum
 docker run --rm -e DATABASE_URL="postgresql://…" carta-centrum python -m migrations   # schema changes
 ```
 
-**Hosted deployment:** the live site, https://carta-centrum-data.vercel.app, runs on Vercel with a Supabase database in London. Vercel serves the Svelte build as static files and runs FastAPI as a Python function (`api/index.py`, configured in `vercel.json`). The heavy boundary layers are cached on Vercel's CDN. See the Deployment section of `CLAUDE.md` for environment variables and limits.
+**Hosted deployment:** the live site, https://carta-centrum-data.vercel.app, runs on Vercel with a Supabase database in London. Vercel serves the Svelte build as static files and runs FastAPI as a Python function (`api/index.py`, configured in `vercel.json`). Access is invite-only, using Supabase Auth: sign-ups are disabled, invited people receive an email link, and every data endpoint requires a signed-in user. See the Deployment and Invite-only access sections of `CLAUDE.md` for environment variables and limits.
 
 ## 9. Data sources & attribution
 
