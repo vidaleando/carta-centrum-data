@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Setup script for running PWA Map application with Docker on macOS
+# Setup script for running Carta Magna with Docker on macOS
 
 echo "🔍 Checking Docker installation..."
 if ! command -v docker &> /dev/null; then

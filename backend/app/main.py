@@ -6,10 +6,11 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
+from app.auth import jwks_client, require_user
 from app.config import Settings, get_settings
 from app.db import Database
 from app.routers import boundaries, constituencies, datacentres, demo, health, spa
@@ -35,13 +36,15 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
         await app.state.db.close()
 
     app = FastAPI(
-        title="Carta Centrum Data API",
+        title="Carta Magna API",
         description="UK data centres, parliamentary constituencies and MPs, served as GeoJSON from PostGIS.",
         version="1.0.0",
         lifespan=lifespan,
     )
     app.state.settings = settings
     app.state.db = Database(settings)
+    if settings.auth_enabled:
+        app.state.jwks = jwks_client(settings)
 
     # The boundary layers are several MB of GeoJSON. Compressing them also keeps
     # them under Vercel's 4.5 MB function response limit.
@@ -55,13 +58,15 @@ def create_app(settings: Optional[Settings] = None) -> FastAPI:
             allow_headers=["*"],
         )
 
+    # /health stays open for uptime checks; everything else needs a signed-in user.
+    protected = [Depends(require_user)] if settings.auth_enabled else []
     if settings.demo_mode:
-        app.include_router(demo.router)
+        app.include_router(demo.router, dependencies=protected)
     else:
         app.include_router(health.router)
-        app.include_router(datacentres.router)
-        app.include_router(constituencies.router)
-        app.include_router(boundaries.router)
+        app.include_router(datacentres.router, dependencies=protected)
+        app.include_router(constituencies.router, dependencies=protected)
+        app.include_router(boundaries.router, dependencies=protected)
     # Catch-all: must be last.
     app.include_router(spa.router)
     return app

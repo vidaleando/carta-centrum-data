@@ -29,10 +29,11 @@ CONSTITUENCY_BY_NAME_FEATURES = """
 """
 
 # All constituencies, simplified to ~50 m to keep the payload manageable.
+# geometry_simplified is precomputed (migration 003): simplifying on the fly takes ~20 s.
 ALL_CONSTITUENCY_FEATURES = """
     SELECT
         'Feature' AS type,
-        ST_AsGeoJSON(ST_SimplifyPreserveTopology(c.geometry, 0.0005), 6)::json AS geometry,
+        ST_AsGeoJSON(c.geometry_simplified, 6)::json AS geometry,
         json_build_object(
             'name', c.name,
             'code', c.ons_code

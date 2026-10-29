@@ -1,4 +1,6 @@
-# PWA Map Application
+# Carta Magna
+
+A map of UK data centres alongside the parliamentary constituencies and MPs that represent them. See [ARCHITECTURE.md](ARCHITECTURE.md) for the current architecture and setup; parts of this README are out of date.
 
 A Progressive Web Application that displays geographical data from a PostGIS database on an interactive map using MapLibre GL JS. The frontend is built with Svelte, and the backend uses Python with FastAPI.
 

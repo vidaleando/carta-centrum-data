@@ -6,10 +6,9 @@ from fastapi.responses import Response
 
 EMPTY_FEATURE_COLLECTION = '{"type": "FeatureCollection", "features": []}'
 
-# For layers that only change when an importer runs. Building the simplified
-# constituency boundaries takes ~20 s on a small database, so let browsers keep
-# them for an hour and shared caches (e.g. Vercel's CDN) for a day.
-CACHE_LAYER = {"Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800"}
+# For layers that only change when an importer runs. "private": the API needs a
+# signed-in user, so shared caches (e.g. Vercel's CDN) must not store them.
+CACHE_LAYER = {"Cache-Control": "private, max-age=3600"}
 
 
 class GeoJSONResponse(Response):

@@ -1,5 +1,5 @@
 {
-  "name": "pwa-map-app",
+  "name": "carta-magna",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -14,6 +14,7 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.45.4",
     "maplibre-gl": "^4.7.1"
   }
 }
