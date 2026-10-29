@@ -122,3 +122,34 @@ def test_send_invite_reports_supabase_errors():
 
     with _admin_client(handler) as client, pytest.raises(InviteFailed, match="rate limit"):
         send_invite(client, "ada@example.com", "https://site")
+
+
+def test_list_users_pages_and_formats():
+    from datetime import datetime, timezone
+
+    from tools.invite import format_users, list_users
+
+    def user(n, created="2026-09-01T09:00:00Z", **extra):
+        return {"email": f"u{n}@example.com", "created_at": created, **extra}
+
+    pages = {
+        "1": [user(n) for n in range(1, 101)],
+        "2": [
+            user(101, "2026-10-28T09:00:00Z", last_sign_in_at="2026-10-29T10:00:00Z"),
+            user(102, "2026-10-29T09:00:00Z", banned_until="2126-01-01T00:00:00Z", last_sign_in_at="2026-10-29T10:00:00Z"),
+        ],
+    }
+
+    def handler(request):
+        assert request.url.params["per_page"] == "100"
+        return httpx.Response(200, json={"users": pages[request.url.params["page"]]})
+
+    with _admin_client(handler) as client:
+        users = list_users(client)
+    assert len(users) == 102
+
+    table = format_users(users[-3:], datetime(2026, 10, 29, tzinfo=timezone.utc)).splitlines()
+    assert table[0].split() == ["EMAIL", "STATUS", "INVITED", "LAST", "SIGN-IN"]
+    assert [line.split()[1] for line in table[1:4]] == ["invited", "active", "banned"]
+    assert table[2].split()[3] == "2026-10-29"
+    assert table[-1] == "3 user(s)"
