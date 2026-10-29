@@ -31,6 +31,7 @@ python -m importers.constituencies    # needs backend/constituencies.geojson (gi
 python -m importers.mps               # needs THEYWORKFORYOU_KEY
 python -m importers.osm_datacentres   # UK data centres from Overpass
 python -m tools.invite ada@example.com [--link-only]   # invite a user (needs SUPABASE_URL, SUPABASE_SECRET_KEY)
+python -m tools.invite --list                         # who has access: invited, active or banned
 
 # Tests (DB tests skip unless TEST_DATABASE_URL points at a disposable PostGIS)
 docker run -d --name carta-test-db -e POSTGRES_PASSWORD=test -e POSTGRES_DB=carta_test -p 55432:5432 postgis/postgis:15-3.3
