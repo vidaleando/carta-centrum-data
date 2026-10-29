@@ -94,7 +94,7 @@ def test_large_responses_are_gzipped(db_client):
     # The fixture GeoJSON is below the 1 KB threshold; the OpenAPI schema isn't.
     r = db_client.get("/openapi.json", headers={"Accept-Encoding": "gzip"})
     assert r.headers["content-encoding"] == "gzip"
-    assert r.json()["info"]["title"] == "Carta Centrum Data API"
+    assert r.json()["info"]["title"] == "Carta Magna API"
     small = db_client.get("/health", headers={"Accept-Encoding": "gzip"})
     assert "content-encoding" not in small.headers
 
@@ -112,5 +112,5 @@ def test_removed_endpoints_are_gone(db_client):
 
 def test_boundary_layers_are_cacheable(db_client):
     for path in ["/api/parliamentary-boundaries", "/api/counties", "/api/constituency/Riverside North"]:
-        assert "s-maxage" in db_client.get(path).headers["cache-control"]
+        assert db_client.get(path).headers["cache-control"] == "private, max-age=3600"
     assert "cache-control" not in db_client.get("/api/constituency-mp", params={"lat": 51.5, "lon": -0.1}).headers

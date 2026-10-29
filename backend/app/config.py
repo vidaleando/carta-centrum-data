@@ -5,6 +5,7 @@ from typing import Optional
 from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from fastapi import Request
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -32,6 +33,26 @@ class Settings(BaseSettings):
     # which can't keep asyncpg's named prepared statements between transactions.
     db_statement_cache_size: int = 100
     theyworkforyou_key: Optional[str] = None
+    # Invite-only access: when on, every /api route except /health needs a
+    # Supabase Auth access token (Authorization: Bearer ...).
+    auth_enabled: bool = False
+    supabase_url: Optional[str] = None
+    # Only for tools.invite, run from an admin's machine. Never deploy it.
+    supabase_secret_key: Optional[str] = None
+    # Where invite and sign-in links send people.
+    site_url: str = "https://carta-centrum-data.vercel.app"
+
+    @model_validator(mode="after")
+    def _check_auth(self) -> "Settings":
+        if self.auth_enabled and not self.supabase_url:
+            raise ValueError("AUTH_ENABLED requires SUPABASE_URL")
+        if self.supabase_url:
+            self.supabase_url = self.supabase_url.rstrip("/")
+        return self
+
+    @property
+    def supabase_issuer(self) -> str:
+        return f"{self.supabase_url}/auth/v1"
 
     @property
     def cors_origin_list(self) -> list[str]:

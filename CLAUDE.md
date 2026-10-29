@@ -4,7 +4,7 @@ This file guides Claude Code (claude.ai/code) when working in this repository.
 
 ## What this is
 
-**Carta Centrum Data** (UI title: "Carta Magna") is a map-based PWA that places UK data-centre infrastructure next to democratic representation. Click a data centre and the app finds the parliamentary constituency it sits in, the sitting MP, and highlights the constituency boundary.
+**Carta Magna** (repo and Vercel project: `carta-centrum-data`) is a map-based PWA that places UK data-centre infrastructure next to democratic representation. Click a data centre and the app finds the parliamentary constituency it sits in, the sitting MP, and highlights the constituency boundary.
 
 - **Frontend**: Svelte 4 + Vite 5 + MapLibre GL 4 (`frontend/`)
 - **Backend**: FastAPI + asyncpg (`backend/app/`)
@@ -30,6 +30,7 @@ python -m migrations                  # apply pending backend/migrations/*.sql
 python -m importers.constituencies    # needs backend/constituencies.geojson (gitignored; ONS boundaries)
 python -m importers.mps               # needs THEYWORKFORYOU_KEY
 python -m importers.osm_datacentres   # UK data centres from Overpass
+python -m tools.invite ada@example.com [--link-only]   # invite a user (needs SUPABASE_URL, SUPABASE_SECRET_KEY)
 
 # Tests (DB tests skip unless TEST_DATABASE_URL points at a disposable PostGIS)
 docker run -d --name carta-test-db -e POSTGRES_PASSWORD=test -e POSTGRES_DB=carta_test -p 55432:5432 postgis/postgis:15-3.3
@@ -80,8 +81,17 @@ There are no linters or type-checkers configured.
 - Env vars on Vercel: `DATABASE_URL` (Supabase transaction pooler, port 6543), `DB_STATEMENT_CACHE_SIZE=0` (required by the transaction pooler), `DB_POOL_MIN_SIZE=0`, `DB_POOL_MAX_SIZE=3`.
 - Run migrations and importers against the **session** pooler (port 5432) from your machine.
 - Function responses are limited to 4.5 MB. GZip plus 6-decimal coordinates keep `/api/parliamentary-boundaries` at about 2.3 MB.
-- Building that layer takes about 20 s on Supabase's free tier. Boundary layers send `Cache-Control: s-maxage=86400`, so Vercel's CDN serves repeat requests. Hit the endpoint once after a deploy to warm the cache.
+- Simplifying all constituencies on the fly took about 20 s, so migration `003` stores `geometry_simplified` as a generated column. Boundary layers send `Cache-Control: private` (browser only), because the API requires a login and a shared CDN must not cache it.
 - Migration `002` enables RLS with no policies, so Supabase's auto-generated REST API exposes nothing. The app connects as the table owner, which bypasses RLS. Enable RLS on any new public table too.
+
+## Invite-only access
+
+- **Supabase Auth with sign-ups disabled.** Invited users get an emailed link (`tools/invite.py`). Afterwards they can ask the sign-in page for a fresh one-time link (`signInWithOtp` with `shouldCreateUser: false`).
+- **Backend:** with `AUTH_ENABLED=true`, `app/auth.py` checks every router except `/health` for `Authorization: Bearer <access token>`. It verifies the token locally against Supabase's JWKS (ES256, audience `authenticated`, issuer `$SUPABASE_URL/auth/v1`). Auth is off by default, for local dev and tests.
+- **Frontend:** `Root.svelte` shows `SignIn.svelte` until there is a session. All API calls go through `lib/api.js` (`apiFetch`), which adds the token and signs out on a 401. Without `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` at build time, there is no sign-in screen.
+- **Vercel env:** `AUTH_ENABLED`, `SUPABASE_URL`, `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. **Never** put `SUPABASE_SECRET_KEY` on Vercel; it's only for running `tools.invite` locally.
+- **Email:** Supabase's built-in sender only delivers to members of the Supabase organisation and allows about 2 emails an hour. Inviting anyone else needs custom SMTP (Authentication → Emails → SMTP Settings). Until then, use `--link-only` and send the link yourself. Custom email templates also need custom SMTP.
+- **Redirect allow list in Supabase:** the production URL, `https://*-vidaleando1.vercel.app/**` (previews) and `http://localhost:3000/**`.
 
 ## Gotchas
 

@@ -8,6 +8,11 @@
   import DetailPanel from './components/DetailPanel.svelte';
   import { EMPTY, boundsOf, containsPoint, dcLabel, pointFeature, toDc } from './lib/geo.js';
   import { getPartyColor } from './lib/party.js';
+  import { apiFetch } from './lib/api.js';
+
+  /** The signed-in Supabase user, when invite-only access is on. */
+  export let user = null;
+  export let onSignOut = null;
 
   const DC_COLOR = '#ff4d00';
   const DC_LAYER = 'data-centers-layer';
@@ -101,7 +106,7 @@
 
     try {
       // Startup contract: this works without a database (see CLAUDE.md).
-      const response = await fetch('/api/geojson?source=sample');
+      const response = await apiFetch('/api/geojson?source=sample');
       if (!response.ok) {
         console.error(`API Error ${response.status}:`, await response.text());
         throw new Error(`Failed to fetch base data: ${response.status} ${response.statusText}`);
@@ -150,7 +155,7 @@
 
     layerState[key] = { ...layerState[key], loading: true, error: null };
     try {
-      const res = await fetch(def.url);
+      const res = await apiFetch(def.url);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       if (!data.features?.length) {
@@ -204,7 +209,7 @@
 
     const [lon, lat] = dc.coordinates;
     try {
-      const res = await fetch(`/api/constituency-mp?lat=${lat}&lon=${lon}`);
+      const res = await apiFetch(`/api/constituency-mp?lat=${lat}&lon=${lon}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const mp = await res.json();
       if (token !== selectToken) return;
@@ -221,7 +226,7 @@
 
       selected = { dc, status: 'ready', mp: { ...mp, color: getPartyColor(mp.party) }, neighbours: null };
 
-      const geomRes = await fetch(`/api/constituency/${encodeURIComponent(mp.constituency)}`);
+      const geomRes = await apiFetch(`/api/constituency/${encodeURIComponent(mp.constituency)}`);
       if (!geomRes.ok) throw new Error(`HTTP ${geomRes.status}`);
       const geom = await geomRes.json();
       if (token !== selectToken || !geom.features?.length) return;
@@ -321,6 +326,12 @@
       Data centres come from OpenStreetMap, constituency boundaries from the ONS (2024), and MPs from
       TheyWorkForYou. The map currently shows at most 1,000 data centres.
     </p>
+    {#if user}
+      <p class="account">
+        Signed in as <strong>{user.email}</strong>
+        <button class="sign-out" type="button" on:click={onSignOut}>Sign out</button>
+      </p>
+    {/if}
     <form method="dialog"><button type="submit">Close</button></form>
   </dialog>
 </main>
@@ -449,6 +460,17 @@
   .about h2 { margin: 0 0 0.6rem; font-size: 1.1rem; }
   .about p { margin: 0 0 0.8rem; font-size: 0.92rem; line-height: 1.55; color: var(--muted); }
   .about form { text-align: right; }
+  .about .account { padding-top: 0.8rem; border-top: 1px solid var(--line); }
+  .about .sign-out {
+    margin-left: 0.4rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--brand);
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+  }
   .about button {
     font: inherit;
     padding: 0.4rem 1rem;
